@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Street Kings - Web3 Gaming Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #00ff00;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px;
+            text-align: center;
+            border-bottom: 3px solid #00ff00;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            text-shadow: 0 0 10px #00ff00;
+            margin-bottom: 10px;
+        }
+
+        .wallet-connect {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #00ff00;
+            color: #000;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .wallet-connect:hover {
+            background: #00cc00;
+            transform: scale(1.05);
+        }
+
+        .wallet-info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 255, 0, 0.1);
+            padding: 10px 20px;
+            border: 2px solid #00ff00;
+            border-radius: 5px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            background: #1a1a2e;
+            padding: 15px;
+            border-bottom: 2px solid #00ff00;
+        }
+
+        .nav-tab {
+            background: transparent;
+            color: #00ff00;
+            border: 2px solid #00ff00;
+            padding: 15px 40px;
+            cursor: pointer;
+            font-size: 1.2em;
+            transition: all 0.3s;
+            text-transform: uppercase;
+        }
+
+        .nav-tab:hover {
+            background: #00ff00;
+            color: #000;
+        }
+
+        .nav-tab.active {
+            background: #00ff00;
+            color: #000;
+        }
+
+        .content-section {
+            display: none;
+            padding: 20px;
+            min-height: 80vh;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        /* Gaming Section */
+        .game-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .game-canvas-wrapper {
+            background: #1a1a2e;
+            padding: 20px;
+            border: 3px solid #00ff00;
+            border-radius: 10px;
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background: #2a2a3e;
+            border: 2px solid #00ff00;
+        }
+
+        .game-controls {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .game-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: #1a1a2e;
+            padding: 20px;
+            border: 2px solid #00ff00;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            color: #00ff00;
+            font-weight: bold;
+        }
+
+        /* Minting Section */
+        .mint-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .mint-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .mint-card {
+            background: #1a1a2e;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .mint-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        }
+
+        .mint-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border: 2px solid #00ff00;
+            margin-bottom: 10px;
+        }
+
+        .mint-btn {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 10px 30px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+            width: 100%;
+            transition: all 0.3s;
+        }
+
+        .mint-btn:hover {
+            background: #00cc00;
+        }
+
+        /* Marketplace Section */
+        .marketplace-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .marketplace-filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background: #1a1a2e;
+            color: #00ff00;
+            border: 2px solid #00ff00;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: #00ff00;
+            color: #000;
+        }
+
+        .marketplace-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .nft-card {
+            background: #1a1a2e;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            padding: 15px;
+            transition: transform 0.3s;
+        }
+
+        .nft-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0, 255, 0, 0.3);
+        }
+
+        .nft-image {
+            width: 100%;
+            height: 200px;
+            background: #2a2a3e;
+            border: 2px solid #00ff00;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3em;
+        }
+
+        .nft-details {
+            margin: 10px 0;
+        }
+
+        .nft-price {
+            font-size: 1.5em;
+            color: #00ff00;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .buy-btn, .sell-btn {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 5px;
+            transition: all 0.3s;
+        }
+
+        .buy-btn:hover {
+            background: #00cc00;
+        }
+
+        .sell-btn {
+            background: #ff9500;
+        }
+
+        .sell-btn:hover {
+            background: #cc7700;
+        }
+
+        .inventory-section {
+            background: #1a1a2e;
+            padding: 20px;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .instructions {
+            background: rgba(0, 255, 0, 0.1);
+            padding: 15px;
+            border: 2px solid #00ff00;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1a1a2e;
+            padding: 30px;
+            border: 3px solid #00ff00;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            background: #2a2a3e;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .confirm-btn {
+            background: #00ff00;
+            color: #000;
+        }
+
+        .cancel-btn {
+            background: #ff0000;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎮 STREET KINGS - WEB3 EDITION 🎮</h1>
+        <button class="wallet-connect" id="walletBtn">CONNECT WALLET</button>
+    </div>
+
+    <div class="nav-tabs">
+        <button class="nav-tab active" onclick="switchTab('gaming')">🎮 GAMING</button>
+        <button class="nav-tab" onclick="switchTab('minting')">⚡ MINT NFTs</button>
+        <button class="nav-tab" onclick="switchTab('marketplace')">🏪 MARKETPLACE</button>
+    </div>
+
+    <!-- Gaming Section -->
+    <div class="content-section active" id="gaming">
+        <div class="game-container">
+            <div class="instructions">
+                <h2>🎮 CONTROLS</h2>
+                <p>↑↓←→ Arrow Keys: Move | SPACE: Shoot | C: Collect Items | ESC: Pause</p>
+            </div>
+            <div class="game-canvas-wrapper">
+                <canvas id="gameCanvas" width="800" height="600"></canvas>
+            </div>
+            <div class="game-stats">
+                <div class="stat-card">
+                    <div>SCORE</div>
+                    <div class="stat-value" id="score">0</div>
+                </div>
+                <div class="stat-card">
+                    <div>ITEMS COLLECTED</div>
+                    <div class="stat-value" id="itemsCollected">0</div>
+                </div>
+                <div class="stat-card">
+                    <div>LEVEL</div>
+                    <div class="stat-value" id="level">1</div>
+                </div>
+                <div class="stat-card">
+                    <div>HEALTH</div>
+                    <div class="stat-value" id="health">100</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Minting Section -->
+    <div class="content-section" id="minting">
+        <div class="mint-container">
+            <h2 style="text-align: center; margin-bottom: 20px;">⚡ MINT YOUR IN-GAME ITEMS AS NFTs ⚡</h2>
+            <div class="instructions">
+                <p>Convert your collected in-game items into NFTs on the blockchain. Each NFT is unique and can be traded on the marketplace!</p>
+            </div>
+            <div class="mint-grid" id="mintGrid">
+                <!-- Mint cards will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Marketplace Section -->
+    <div class="content-section" id="marketplace">
+        <div class="marketplace-container">
+            <h2 style="text-align: center; margin-bottom: 20px;">🏪 NFT MARKETPLACE 🏪</h2>
+            
+            <div class="inventory-section">
+                <h3>YOUR INVENTORY</h3>
+                <div class="marketplace-grid" id="inventoryGrid">
+                    <!-- User's NFTs will appear here -->
+                </div>
+            </div>
+
+            <div class="marketplace-filters">
+                <button class="filter-btn active" onclick="filterMarketplace('all')">All Items</button>
+                <button class="filter-btn" onclick="filterMarketplace('weapons')">Weapons</button>
+                <button class="filter-btn" onclick="filterMarketplace('vehicles')">Vehicles</button>
+                <button class="filter-btn" onclick="filterMarketplace('powerups')">Power-ups</button>
+                <button class="filter-btn" onclick="filterMarketplace('rare')">Rare</button>
+            </div>
+
+            <h3 style="margin: 20px 0;">AVAILABLE ITEMS</h3>
+            <div class="marketplace-grid" id="marketplaceGrid">
+                <!-- Marketplace items will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Sell Modal -->
+    <div class="modal" id="sellModal">
+        <div class="modal-content">
+            <h2>SELL NFT</h2>
+            <p>Set your price for: <span id="sellItemName"></span></p>
+            <input type="number" id="sellPrice" placeholder="Price in ETH" step="0.01">
+            <div class="modal-buttons">
+                <button class="modal-btn confirm-btn" onclick="confirmSell()">CONFIRM</button>
+                <button class="modal-btn cancel-btn" onclick="closeSellModal()">CANCEL</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== STATE MANAGEMENT =====
+        let walletConnected = false;
+        let walletAddress = '';
+        let currentTab = 'gaming';
+        
+        // Game State
+        let gameState = {
+            score: 0,
+            itemsCollected: 0,
+            level: 1,
+            health: 100,
+            inventory: []
+        };
+
+        // Player
+        let player = {
+            x: 400,
+            y: 300,
+            width: 30,
+            height: 30,
+            speed: 5,
+            color: '#00ff00'
+        };
+
+        // Items to collect
+        let items = [];
+        let enemies = [];
+        let bullets = [];
+        
+        // User's NFT collection
+        let userNFTs = [];
+        
+        // Marketplace listings
+        let marketplaceListings = [
+            {id: 1, name: 'Golden AK-47', type: 'weapons', rarity: 'rare', price: 0.5, icon: '🔫', seller: '0x742...d4e'},
+            {id: 2, name: 'Speed Bike', type: 'vehicles', rarity: 'common', price: 0.3, icon: '🏍️', seller: '0x123...abc'},
+            {id: 3, name: 'Armor Vest', type: 'powerups', rarity: 'uncommon', price: 0.2, icon: '🦺', seller: '0x456...def'},
+            {id: 4, name: 'Sports Car', type: 'vehicles', rarity: 'rare', price: 0.8, icon: '🚗', seller: '0x789...ghi'},
+            {id: 5, name: 'Health Pack', type: 'powerups', rarity: 'common', price: 0.1, icon: '💊', seller: '0xabc...123'},
+            {id: 6, name: 'Rocket Launcher', type: 'weapons', rarity: 'rare', price: 1.2, icon: '🚀', seller: '0xdef...456'}
+        ];
+
+        let currentSellItem = null;
+
+        // ===== WALLET CONNECTION =====
+        document.getElementById('walletBtn').addEventListener('click', async () => {
+            if (!walletConnected) {
+                // Simulate wallet connection
+                walletAddress = '0x' + Math.random().toString(36).substring(2, 15);
+                walletConnected = true;
+                
+                const btn = document.getElementById('walletBtn');
+                btn.textContent = walletAddress.substring(0, 6) + '...' + walletAddress.substring(38);
+                btn.style.background = '#00cc00';
+                
+                alert('Wallet Connected!\n' + walletAddress);
+            }
+        });
+
+        // ===== TAB SWITCHING =====
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-tab').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            document.getElementById(tab).classList.add('active');
+            event.target.classList.add('active');
+
+            if (tab === 'minting') {
+                renderMintGrid();
+            } else if (tab === 'marketplace') {
+                renderMarketplace();
+            }
+        }
+
+        // ===== GAME LOGIC =====
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const keys = {};
+        
+        document.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            if (e.key === ' ') {
+                e.preventDefault();
+                shootBullet();
+            }
+            if (e.key === 'c' || e.key === 'C') {
+                collectNearbyItems();
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        function spawnItem() {
+            const itemTypes = [
+                {icon: '💰', name: 'Cash', points: 100, color: '#FFD700'},
+                {icon: '🔫', name: 'Weapon', points: 200, color: '#FF0000'},
+                {icon: '🏍️', name: 'Vehicle', points: 300, color: '#00FFFF'},
+                {icon: '💊', name: 'Health', points: 150, color: '#00FF00'}
+            ];
+            
+            const type = itemTypes[Math.floor(Math.random() * itemTypes.length)];
+            
+            items.push({
+                x: Math.random() * (canvas.width - 30),
+                y: Math.random() * (canvas.height - 30),
+                width: 30,
+                height: 30,
+                ...type
+            });
+        }
+
+        function spawnEnemy() {
+            enemies.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                width: 25,
+                height: 25,
+                speed: 2,
+                color: '#FF0000',
+                health: 3
+            });
+        }
+
+        function shootBullet() {
+            bullets.push({
+                x: player.x + player.width / 2,
+                y: player.y,
+                width: 5,
+                height: 10,
+                speed: 10,
+                color: '#FFFF00'
+            });
+        }
+
+        function collectNearbyItems() {
+            items = items.filter(item => {
+                const dx = player.x - item.x;
+                const dy = player.y - item.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 50) {
+                    gameState.score += item.points;
+                    gameState.itemsCollected++;
+                    gameState.inventory.push(item);
+                    updateGameStats();
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        function updateGameStats() {
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('itemsCollected').textContent = gameState.itemsCollected;
+            document.getElementById('level').textContent = gameState.level;
+            document.getElementById('health').textContent = gameState.health;
+        }
+
+        function gameLoop() {
+            // Clear canvas
+            ctx.fillStyle = '#2a2a3e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw grid
+            ctx.strokeStyle = 'rgba(0, 255, 0, 0.1)';
+            for (let i = 0; i < canvas.width; i += 40) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, canvas.height);
+                ctx.stroke();
+            }
+            for (let i = 0; i < canvas.height; i += 40) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(canvas.width, i);
+                ctx.stroke();
+            }
+
+            // Player movement
+            if (keys['ArrowUp'] && player.y > 0) player.y -= player.speed;
+            if (keys['ArrowDown'] && player.y < canvas.height - player.height) player.y += player.speed;
+            if (keys['ArrowLeft'] && player.x > 0) player.x -= player.speed;
+            if (keys['ArrowRight'] && player.x < canvas.width - player.width) player.x += player.speed;
+
+            // Draw player
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            ctx.strokeStyle = '#FFFF00';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(player.x, player.y, player.width, player.height);
+
+            // Update and draw bullets
+            bullets = bullets.filter(bullet => {
+                bullet.y -= bullet.speed;
+                ctx.fillStyle = bullet.color;
+                ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+                return bullet.y > 0;
+            });
+
+            // Update and draw items
+            items.forEach(item => {
+                ctx.fillStyle = item.color;
+                ctx.fillRect(item.x, item.y, item.width, item.height);
+                ctx.font = '20px Arial';
+                ctx.fillText(item.icon, item.x + 5, item.y + 22);
+            });
+
+            // Update and draw enemies
+            enemies.forEach(enemy => {
+                // Simple AI: move towards player
+                const dx = player.x - enemy.x;
+                const dy = player.y - enemy.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance > 0) {
+                    enemy.x += (dx / distance) * enemy.speed;
+                    enemy.y += (dy / distance) * enemy.speed;
+                }
+
+                ctx.fillStyle = enemy.color;
+                ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+
+                // Check collision with bullets
+                bullets.forEach((bullet, bIndex) => {
+                    if (bullet.x < enemy.x + enemy.width &&
+                        bullet.x + bullet.width > enemy.x &&
+                        bullet.y < enemy.y + enemy.height &&
+                        bullet.y + bullet.height > enemy.y) {
+                        enemy.health--;
+                        bullets.splice(bIndex, 1);
+                        if (enemy.health <= 0) {
+                            const index = enemies.indexOf(enemy);
+                            enemies.splice(index, 1);
+                            gameState.score += 50;
+                            updateGameStats();
+                        }
+                    }
+                });
+            });
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Spawn items and enemies periodically
+        setInterval(spawnItem, 3000);
+        setInterval(spawnEnemy, 5000);
+
+        // Initialize with some items
+        for (let i = 0; i < 5; i++) {
+            spawnItem();
+        }
+        for (let i = 0; i < 2; i++) {
+            spawnEnemy();
+        }
+
+        gameLoop();
+
+        // ===== MINTING LOGIC =====
+        function renderMintGrid() {
+            const grid = document.getElementById('mintGrid');
+            grid.innerHTML = '';
+
+            if (gameState.inventory.length === 0) {
+                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 40px;">Play the game and collect items to mint them as NFTs!</p>';
+                return;
+            }
+
+            gameState.inventory.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'mint-card';
+                card.innerHTML = `
+                    <div class="nft-image" style="background: ${item.color}">${item.icon}</div>
+                    <h3>${item.name}</h3>
+                    <p>Points: ${item.points}</p>
+                    <button class="mint-btn" onclick="mintNFT(${index})">MINT AS NFT - 0.01 ETH</button>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function mintNFT(index) {
+            if (!walletConnected) {
+                alert('Please connect your wallet first!');
+                return;
+            }
+
+            const item = gameState.inventory[index];
+            const nftId = Date.now();
+            
+            const nft = {
+                id: nftId,
+                name: item.name,
+                type: item.name.toLowerCase().includes('weapon') ? 'weapons' : 
+                      item.name.toLowerCase().includes('vehicle') ? 'vehicles' : 'powerups',
+                rarity: item.points > 200 ? 'rare' : item.points > 150 ? 'uncommon' : 'common',
+                icon: item.icon,
+                color: item.color,
+                mintedAt: new Date().toLocaleString(),
+                owner: walletAddress
+            };
+
+            userNFTs.push(nft);
+            gameState.inventory.splice(index, 1);
+            
+            alert(`✅ Successfully minted ${item.name} as NFT!\nTransaction Hash: 0x${Math.random().toString(36).substring(2)}`);
+            
+            renderMintGrid();
+        }
+
+        // ===== MARKETPLACE LOGIC =====
+        function renderMarketplace() {
+            renderInventory();
+            renderMarketplaceListings();
+        }
+
+        function renderInventory() {
+            const grid = document.getElementById('inventoryGrid');
+            grid.innerHTML = '';
+
+            if (userNFTs.length === 0) {
+                grid.innerHTML = '<p style="text-align: center; padding: 20px;">You don\'t own any NFTs yet. Mint some items or buy from the marketplace!</p>';
+                return;
+            }
+
+            userNFTs.forEach((nft, index) => {
+                const card = document.createElement('div');
+                card.className = 'nft-card';
+                card.innerHTML = `
+                    <div class="nft-image" style="background: ${nft.color || '#2a2a3e'}">${nft.icon}</div>
+                    <h3>${nft.name}</h3>
+                    <p>Rarity: ${nft.rarity}</p>
+                    <p>Minted: ${nft.mintedAt}</p>
+                    <button class="sell-btn" onclick="openSellModal(${index})">LIST FOR SALE</button>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function renderMarketplaceListings(filter = 'all') {
+            const grid = document.getElementById('marketplaceGrid');
+            grid.innerHTML = '';
+
+            let listings = marketplaceListings;
+            if (filter !== 'all') {
+                listings = marketplaceListings.filter(item => 
+                    item.type === filter || item.rarity === filter
+                );
+            }
+
+            listings.forEach(listing => {
+                const card = document.createElement('div');
+                card.className = 'nft-card';
+                card.innerHTML = `
+                    <div class="nft-image">${listing.icon}</div>
+                    <h3>${listing.name}</h3>
+                    <p>Type: ${listing.type}</p>
+                    <p>Rarity: ${listing.rarity}</p>
+                    <p class="nft-price">${listing.price} ETH</p>
+                    <p style="font-size: 0.8em; opacity: 0.7;">Seller: ${listing.seller}</p>
+                    <button class="buy-btn" onclick="buyNFT(${listing.id})">BUY NOW</button>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function filterMarketplace(type) {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            renderMarketplaceListings(type);
+        }
+
+        function buyNFT(id) {
+            if (!walletConnected) {
+                alert('Please connect your wallet first!');
+                return;
+            }
+
+            const listing = marketplaceListings.find(item => item.id === id);
+            if (!listing) return;
+
+            const confirmed = confirm(`Buy ${listing.name} for ${listing.price} ETH?`);
+            if (confirmed) {
+                const nft = {
+                    ...listing,
+                    owner: walletAddress,
+                    mintedAt: new Date().toLocaleString()
+                };
+                
+                userNFTs.push(nft);
+                marketplaceListings = marketplaceListings.filter(item => item.id !== id);
+                
+                alert(`✅ Successfully purchased ${listing.name}!\nTransaction Hash: 0x${Math.random().toString(36).substring(2)}`);
+                
+                renderMarketplace();
+            }
+        }
+
+        function openSellModal(index) {
+            currentSellItem = userNFTs[index];
+            document.getElementById('sellItemName').textContent = currentSellItem.name;
+            document.getElementById('sellModal').classList.add('active');
+        }
+
+        function closeSellModal() {
+            document.getElementById('sellModal').classList.remove('active');
+            document.getElementById('sellPrice').value = '';
+            currentSellItem = null;
+        }
+
+        function confirmSell() {
+            const price = parseFloat(document.getElementById('sellPrice').value);
+            
+            if (!price || price <= 0) {
+                alert('Please enter a valid price!');
+                return;
+            }
+
+            // Create marketplace listing
+            const listing = {
+                id: Date.now(),
+                name: currentSellItem.name,
+                type: currentSellItem.type,
+                rarity: currentSellItem.rarity,
+                price: price,
+                icon: currentSellItem.icon,
+                color: currentSellItem.color,
+                seller: walletAddress
+            };
+
+            marketplaceListings.push(listing);
+            
+            // Remove from user inventory
+            const index = userNFTs.indexOf(currentSellItem);
+            userNFTs.splice(index, 1);
+
+            alert(`✅ Successfully listed ${currentSellItem.name} for ${price} ETH!\nTransaction Hash: 0x${Math.random().toString(36).substring(2)}`);
+            
+            closeSellModal();
+            renderMarketplace();
+        }
+
+        // Initialize
+        updateGameStats();
+    </script>
+</body>
+</html>
