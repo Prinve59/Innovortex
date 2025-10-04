@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Add these to head -->
+    <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js" type="application/javascript"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Street Kings - Web3 Gaming Platform</title>
@@ -365,6 +367,51 @@
             background: #ff0000;
             color: #fff;
         }
+        /* Battle Interface CSS - ADD THIS */
+.battle-container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.battle-interface {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.battle-form {
+    background: #1a1a2e;
+    padding: 20px;
+    border: 2px solid #00ff00;
+    border-radius: 10px;
+}
+
+.battle-form select,
+.battle-form input {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    background: #2a2a3e;
+    border: 2px solid #00ff00;
+    color: #00ff00;
+    font-family: 'Courier New', monospace;
+}
+
+.active-battles {
+    background: #1a1a2e;
+    padding: 20px;
+    border: 2px solid #00ff00;
+    border-radius: 10px;
+}
+
+.battle-item {
+    background: rgba(0, 255, 0, 0.1);
+    padding: 15px;
+    margin: 10px 0;
+    border: 1px solid #00ff00;
+    border-radius: 5px;
+}
     </style>
 </head>
 <body>
@@ -376,6 +423,7 @@
     <div class="nav-tabs">
         <button class="nav-tab active" onclick="switchTab('gaming')">🎮 GAMING</button>
         <button class="nav-tab" onclick="switchTab('minting')">⚡ MINT NFTs</button>
+        <button class="nav-tab" onclick="switchTab('battles')">⚔️ BATTLES</button>
         <button class="nav-tab" onclick="switchTab('marketplace')">🏪 MARKETPLACE</button>
     </div>
 
@@ -422,6 +470,33 @@
             </div>
         </div>
     </div>
+
+<!-- Add battles section -->
+<div class="content-section" id="battles">
+    <div class="battle-container">
+        <h2 style="text-align: center; margin-bottom: 20px;">⚔️ ON-CHAIN BATTLES ⚔️</h2>
+        <div class="instructions">
+            <p>Challenge other players' characters in on-chain battles! Winner takes the prize pool.</p>
+        </div>
+        
+        <div class="battle-interface">
+            <div class="battle-form">
+                <h3>Start New Battle</h3>
+                <select id="battleCharacter">
+                    <option value="">Select Your Character</option>
+                </select>
+                <input type="text" id="opponentAddress" placeholder="Opponent Wallet Address">
+                <input type="number" id="opponentTokenId" placeholder="Opponent Token ID">
+                <button onclick="startBattle()" class="mint-btn">START BATTLE - 0.001 ETH</button>
+            </div>
+            
+            <div class="active-battles">
+                <h3>Active Battles</h3>
+                <div id="battlesList"></div>
+            </div>
+        </div>
+    </div>
+</div>
 
     <!-- Marketplace Section -->
     <div class="content-section" id="marketplace">
@@ -508,20 +583,80 @@
 
         let currentSellItem = null;
 
-        // ===== WALLET CONNECTION =====
-        document.getElementById('walletBtn').addEventListener('click', async () => {
-            if (!walletConnected) {
-                // Simulate wallet connection
-                walletAddress = '0x' + Math.random().toString(36).substring(2, 15);
+        // ===== REAL WALLET CONNECTION =====
+    document.getElementById('walletBtn').addEventListener('click', async () => {
+        if (window.ethereum) {
+            try {
+                // Request account access
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                const signer = provider.getSigner();
+                const address = await signer.getAddress();
+                
+                walletAddress = address;
                 walletConnected = true;
                 
                 const btn = document.getElementById('walletBtn');
-                btn.textContent = walletAddress.substring(0, 6) + '...' + walletAddress.substring(38);
+                btn.textContent = address.substring(0, 6) + '...' + address.substring(38);
                 btn.style.background = '#00cc00';
                 
-                alert('Wallet Connected!\n' + walletAddress);
+                // Initialize contracts
+                await initializeContracts(signer);
+                
+                alert('Wallet Connected!\n' + address);
+            } catch (error) {
+                console.error("Wallet connection error:", error);
+                alert('Error connecting wallet');
             }
-        });
+        } else {
+            alert('Please install MetaMask!');
+        }
+    });
+
+    // Contract addresses (replace with your deployed addresses)
+    const CONTRACT_ADDRESSES = {
+        gameNFT: "0xYourGameNFTAddress",
+        battleArena: "0xYourBattleArenaAddress", 
+        marketplace: "0xYourMarketplaceAddress"
+    };
+
+    // ===== PLACEHOLDER ABIs - REPLACE WITH ACTUAL ABIs FROM YOUR CONTRACTS =====
+const GAMENFT_ABI = [
+    "function mintCharacter(string name, uint256 characterType) external",
+    "function getUserCharacters(address player) external view returns (uint256[])",
+    "function getCharacter(uint256 tokenId) external view returns (tuple(uint256 characterId, string name, uint256 health, uint256 attack, uint256 defense, uint256 level, uint256 experience))",
+    "function ownerOf(uint256 tokenId) external view returns (address)",
+    "function setApprovalForAll(address operator, bool approved) external",
+    "function isApprovedForAll(address owner, address operator) external view returns (bool)",
+    "event CharacterMinted(address indexed player, uint256 tokenId, uint256 characterId)"
+];
+
+const BATTLEARENA_ABI = [
+    "function startBattle(address opponent, uint256 yourTokenId, uint256 opponentTokenId) external payable",
+    "function submitMove(uint256 battleId, uint256 move) external",
+    "function getBattle(uint256 battleId) external view returns (tuple(uint256 battleId, address player1, address player2, uint256 tokenId1, uint256 tokenId2, uint256 player1Move, uint256 player2Move, bool resolved, address winner, uint256 reward))",
+    "function getPlayerStats(address player) external view returns (uint256 wins, uint256 losses)"
+];
+
+const MARKETPLACE_ABI = [
+    "function listNFT(address nftContract, uint256 tokenId, uint256 price) external",
+    "function buyNFT(uint256 listingId) external payable",
+    "function getActiveListings() external view returns (tuple(address seller, address nftContract, uint256 tokenId, uint256 price, bool active)[])",
+    "function listings(uint256 listingId) external view returns (address seller, address nftContract, uint256 tokenId, uint256 price, bool active)",
+    "function cancelListing(uint256 listingId) external"
+];
+
+    let gameNFT, battleArena, marketplace;
+
+    async function initializeContracts(signer) {
+        // Initialize contract instances
+        gameNFT = new ethers.Contract(CONTRACT_ADDRESSES.gameNFT, GAMENFT_ABI, signer);
+        battleArena = new ethers.Contract(CONTRACT_ADDRESSES.battleArena, BATTLEARENA_ABI, signer);
+        marketplace = new ethers.Contract(CONTRACT_ADDRESSES.marketplace, MARKETPLACE_ABI, signer);
+        
+        // Load user's NFTs from blockchain
+        await loadUserNFTs();
+    }
 
         // ===== TAB SWITCHING =====
         function switchTab(tab) {
@@ -752,34 +887,155 @@
             });
         }
 
-        function mintNFT(index) {
+        // ===== REAL NFT MINTING =====
+        async function mintNFT(index) {
             if (!walletConnected) {
                 alert('Please connect your wallet first!');
                 return;
             }
 
             const item = gameState.inventory[index];
-            const nftId = Date.now();
             
-            const nft = {
-                id: nftId,
-                name: item.name,
-                type: item.name.toLowerCase().includes('weapon') ? 'weapons' : 
-                      item.name.toLowerCase().includes('vehicle') ? 'vehicles' : 'powerups',
-                rarity: item.points > 200 ? 'rare' : item.points > 150 ? 'uncommon' : 'common',
-                icon: item.icon,
-                color: item.color,
-                mintedAt: new Date().toLocaleString(),
-                owner: walletAddress
-            };
+            try {
+                // Determine character type based on item
+                let characterType;
+                if (item.name.includes('Weapon')) characterType = 1; // Warrior
+                else if (item.name.includes('Vehicle')) characterType = 2; // Mage  
+                else characterType = 3; // Archer
 
-            userNFTs.push(nft);
-            gameState.inventory.splice(index, 1);
-            
-            alert(`✅ Successfully minted ${item.name} as NFT!\nTransaction Hash: 0x${Math.random().toString(36).substring(2)}`);
-            
-            renderMintGrid();
+                // Call smart contract
+                const tx = await gameNFT.mintCharacter(item.name, characterType);
+                
+                alert(`⏳ Minting transaction submitted!\nHash: ${tx.hash}`);
+                
+                // Wait for confirmation
+                const receipt = await tx.wait();
+                
+                // Get token ID from event
+                const mintEvent = receipt.events?.find(e => e.event === 'CharacterMinted');
+                const tokenId = mintEvent.args.tokenId.toString();
+                
+                // Add to user NFTs
+                const nft = {
+                    id: tokenId,
+                    name: item.name,
+                    type: item.name.toLowerCase().includes('weapon') ? 'weapons' : 
+                        item.name.toLowerCase().includes('vehicle') ? 'vehicles' : 'powerups',
+                    rarity: item.points > 200 ? 'rare' : item.points > 150 ? 'uncommon' : 'common',
+                    icon: item.icon,
+                    color: item.color,
+                    mintedAt: new Date().toLocaleString(),
+                    owner: walletAddress,
+                    tokenId: tokenId
+                };
+
+                userNFTs.push(nft);
+                gameState.inventory.splice(index, 1);
+                
+                alert(`✅ Successfully minted ${item.name} as NFT!\nToken ID: ${tokenId}`);
+                
+                renderMintGrid();
+                renderMarketplace();
+                
+            } catch (error) {
+                console.error('Minting error:', error);
+                alert('Error minting NFT: ' + error.message);
+            }
         }
+
+        // ===== ON-CHAIN BATTLES =====
+async function loadBattleCharacters() {
+    const select = document.getElementById('battleCharacter');
+    select.innerHTML = '<option value="">Select Your Character</option>';
+    
+    userNFTs.forEach(nft => {
+        if (nft.type === 'characters') {
+            const option = document.createElement('option');
+            option.value = nft.tokenId;
+            option.textContent = `${nft.name} (Lvl ${nft.stats?.level || 1})`;
+            select.appendChild(option);
+        }
+    });
+}
+
+async function startBattle() {
+    if (!walletConnected) {
+        alert('Please connect your wallet first!');
+        return;
+    }
+
+    const yourTokenId = document.getElementById('battleCharacter').value;
+    const opponent = document.getElementById('opponentAddress').value;
+    const opponentTokenId = document.getElementById('opponentTokenId').value;
+
+    if (!yourTokenId || !opponent || !opponentTokenId) {
+        alert('Please fill all fields');
+        return;
+    }
+
+    try {
+        const tx = await battleArena.startBattle(
+            opponent,
+            yourTokenId,
+            opponentTokenId,
+            { value: ethers.utils.parseEther("0.001") }
+        );
+        
+        alert(`⏳ Battle started! Transaction: ${tx.hash}`);
+        await tx.wait();
+        
+        alert('✅ Battle started! Now submit your moves.');
+        loadActiveBattles();
+        
+    } catch (error) {
+        console.error('Battle error:', error);
+        alert('Error starting battle: ' + error.message);
+    }
+}
+
+async function loadActiveBattles() {
+    const battlesList = document.getElementById('battlesList');
+    battlesList.innerHTML = '<p>Loading active battles...</p>';
+    
+    try {
+        // This would need to query your contract for active battles
+        // For now, showing a placeholder
+        battlesList.innerHTML = `
+            <div class="battle-item">
+                <p><strong>Battle #1</strong></p>
+                <p>Status: Waiting for moves</p>
+                <p>Your Character: ${userNFTs[0]?.name || 'Unknown'}</p>
+                <button class="mint-btn" style="padding: 5px 10px; margin-top: 10px;">Submit Move</button>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error loading battles:', error);
+        battlesList.innerHTML = '<p>Error loading battles</p>';
+    }
+}
+
+// Update switchTab function to load battle characters
+function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.content-section').forEach(section => {
+        section.classList.remove('active');
+    });
+    document.querySelectorAll('.nav-tab').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    document.getElementById(tab).classList.add('active');
+    event.target.classList.add('active');
+
+    if (tab === 'minting') {
+        renderMintGrid();
+    } else if (tab === 'marketplace') {
+        renderMarketplace();
+    } else if (tab === 'battles') {
+        loadBattleCharacters();
+        loadActiveBattles();
+    }
+}
 
         // ===== MARKETPLACE LOGIC =====
         function renderMarketplace() {
@@ -810,32 +1066,139 @@
             });
         }
 
-        function renderMarketplaceListings(filter = 'all') {
-            const grid = document.getElementById('marketplaceGrid');
-            grid.innerHTML = '';
+        // ===== REAL MARKETPLACE OPERATIONS =====
+async function renderMarketplaceListings(filter = 'all') {
+    const grid = document.getElementById('marketplaceGrid');
+    grid.innerHTML = '<p style="text-align: center; padding: 20px;">Loading marketplace listings...</p>';
 
-            let listings = marketplaceListings;
-            if (filter !== 'all') {
-                listings = marketplaceListings.filter(item => 
-                    item.type === filter || item.rarity === filter
-                );
+    try {
+        // Get active listings from blockchain
+        const listings = await marketplace.getActiveListings();
+        
+        grid.innerHTML = '';
+        
+        if (listings.length === 0) {
+            grid.innerHTML = '<p style="text-align: center; padding: 20px;">No items listed for sale yet.</p>';
+            return;
+        }
+
+        // Render each listing
+        for (let listing of listings) {
+            // Only show GameNFT listings for now
+            if (listing.nftContract.toLowerCase() !== CONTRACT_ADDRESSES.gameNFT.toLowerCase()) {
+                continue;
             }
 
-            listings.forEach(listing => {
-                const card = document.createElement('div');
-                card.className = 'nft-card';
-                card.innerHTML = `
-                    <div class="nft-image">${listing.icon}</div>
-                    <h3>${listing.name}</h3>
-                    <p>Type: ${listing.type}</p>
-                    <p>Rarity: ${listing.rarity}</p>
-                    <p class="nft-price">${listing.price} ETH</p>
-                    <p style="font-size: 0.8em; opacity: 0.7;">Seller: ${listing.seller}</p>
-                    <button class="buy-btn" onclick="buyNFT(${listing.id})">BUY NOW</button>
-                `;
-                grid.appendChild(card);
-            });
+            // Get NFT details
+            const character = await gameNFT.getCharacter(listing.tokenId);
+            const priceInEth = ethers.utils.formatEther(listing.price);
+            
+            const card = document.createElement('div');
+            card.className = 'nft-card';
+            card.innerHTML = `
+                <div class="nft-image" style="background: ${getCharacterColor(character.characterId)}">
+                    ${getCharacterIcon(character.characterId)}
+                </div>
+                <h3>${character.name}</h3>
+                <p>Level: ${character.level}</p>
+                <p>Stats: HP ${character.health} | ATK ${character.attack} | DEF ${character.defense}</p>
+                <p class="nft-price">${priceInEth} ETH</p>
+                <p style="font-size: 0.8em; opacity: 0.7;">Seller: ${listing.seller.substring(0, 6)}...${listing.seller.substring(38)}</p>
+                <button class="buy-btn" onclick="buyNFT(${listing.listingId})">BUY NOW</button>
+            `;
+            grid.appendChild(card);
         }
+        
+    } catch (error) {
+        console.error('Error loading marketplace:', error);
+        grid.innerHTML = '<p style="text-align: center; padding: 20px;">Error loading marketplace</p>';
+    }
+}
+
+async function buyNFT(listingId) {
+    if (!walletConnected) {
+        alert('Please connect your wallet first!');
+        return;
+    }
+
+    try {
+        const listing = await marketplace.listings(listingId);
+        const priceInEth = ethers.utils.formatEther(listing.price);
+        
+        const confirmed = confirm(`Buy this character for ${priceInEth} ETH?`);
+        if (!confirmed) return;
+
+        // Execute purchase
+        const tx = await marketplace.buyNFT(listingId, { value: listing.price });
+        
+        alert(`⏳ Purchase transaction submitted!\nHash: ${tx.hash}`);
+        
+        const receipt = await tx.wait();
+        
+        alert(`✅ Successfully purchased character!\nTransaction confirmed.`);
+        
+        // Reload data
+        await loadUserNFTs();
+        renderMarketplaceListings();
+        
+    } catch (error) {
+        console.error('Buy error:', error);
+        alert('Error purchasing NFT: ' + error.message);
+    }
+}
+
+        async function loadUserNFTs() {
+    if (!gameNFT || !walletConnected) return;
+    
+    try {
+        // Get user's token IDs
+        const tokenIds = await gameNFT.getUserCharacters(walletAddress);
+        
+        userNFTs = [];
+        
+        // Load each NFT data
+        for (let i = 0; i < tokenIds.length; i++) {
+            const tokenId = tokenIds[i];
+            const character = await gameNFT.getCharacter(tokenId);
+            
+            // Convert to frontend format
+            const nft = {
+                id: tokenId.toString(),
+                name: character.name,
+                type: 'characters',
+                rarity: character.level > 5 ? 'rare' : 'common',
+                icon: getCharacterIcon(character.characterId),
+                color: getCharacterColor(character.characterId),
+                mintedAt: 'On-chain',
+                owner: walletAddress,
+                tokenId: tokenId.toString(),
+                stats: {
+                    health: character.health,
+                    attack: character.attack, 
+                    defense: character.defense,
+                    level: character.level
+                }
+            };
+            
+            userNFTs.push(nft);
+        }
+        
+        renderMarketplace();
+        
+    } catch (error) {
+        console.error('Error loading NFTs:', error);
+    }
+}
+
+function getCharacterIcon(characterId) {
+    const icons = ['⚔️', '🔮', '🏹'];
+    return icons[characterId - 1] || '🎮';
+}
+
+function getCharacterColor(characterId) {
+    const colors = ['#FF6B6B', '#4ECDC4', '#FFD166'];
+    return colors[characterId - 1] || '#00ff00';
+}
 
         function filterMarketplace(type) {
             document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -843,32 +1206,6 @@
             });
             event.target.classList.add('active');
             renderMarketplaceListings(type);
-        }
-
-        function buyNFT(id) {
-            if (!walletConnected) {
-                alert('Please connect your wallet first!');
-                return;
-            }
-
-            const listing = marketplaceListings.find(item => item.id === id);
-            if (!listing) return;
-
-            const confirmed = confirm(`Buy ${listing.name} for ${listing.price} ETH?`);
-            if (confirmed) {
-                const nft = {
-                    ...listing,
-                    owner: walletAddress,
-                    mintedAt: new Date().toLocaleString()
-                };
-                
-                userNFTs.push(nft);
-                marketplaceListings = marketplaceListings.filter(item => item.id !== id);
-                
-                alert(`✅ Successfully purchased ${listing.name}!\nTransaction Hash: 0x${Math.random().toString(36).substring(2)}`);
-                
-                renderMarketplace();
-            }
         }
 
         function openSellModal(index) {
@@ -883,38 +1220,50 @@
             currentSellItem = null;
         }
 
-        function confirmSell() {
-            const price = parseFloat(document.getElementById('sellPrice').value);
-            
-            if (!price || price <= 0) {
-                alert('Please enter a valid price!');
-                return;
-            }
+        async function confirmSell() {
+    const price = document.getElementById('sellPrice').value;
+    
+    if (!price || price <= 0) {
+        alert('Please enter a valid price!');
+        return;
+    }
 
-            // Create marketplace listing
-            const listing = {
-                id: Date.now(),
-                name: currentSellItem.name,
-                type: currentSellItem.type,
-                rarity: currentSellItem.rarity,
-                price: price,
-                icon: currentSellItem.icon,
-                color: currentSellItem.color,
-                seller: walletAddress
-            };
-
-            marketplaceListings.push(listing);
-            
-            // Remove from user inventory
-            const index = userNFTs.indexOf(currentSellItem);
-            userNFTs.splice(index, 1);
-
-            alert(`✅ Successfully listed ${currentSellItem.name} for ${price} ETH!\nTransaction Hash: 0x${Math.random().toString(36).substring(2)}`);
-            
-            closeSellModal();
-            renderMarketplace();
+    try {
+        // Convert to wei
+        const priceInWei = ethers.utils.parseEther(price.toString());
+        
+        // Approve marketplace if needed
+        const isApproved = await gameNFT.isApprovedForAll(walletAddress, CONTRACT_ADDRESSES.marketplace);
+        if (!isApproved) {
+            const approveTx = await gameNFT.setApprovalForAll(CONTRACT_ADDRESSES.marketplace, true);
+            await approveTx.wait();
         }
 
+        // List NFT
+        const tx = await marketplace.listNFT(
+            CONTRACT_ADDRESSES.gameNFT, 
+            currentSellItem.tokenId, 
+            priceInWei
+        );
+        
+        alert(`⏳ Listing transaction submitted!\nHash: ${tx.hash}`);
+        
+        await tx.wait();
+        
+        // Remove from local inventory
+        const index = userNFTs.indexOf(currentSellItem);
+        userNFTs.splice(index, 1);
+
+        alert(`✅ Successfully listed ${currentSellItem.name} for ${price} ETH!`);
+        
+        closeSellModal();
+        renderMarketplace();
+        
+    } catch (error) {
+        console.error('Sell error:', error);
+        alert('Error listing NFT: ' + error.message);
+    }
+}
         // Initialize
         updateGameStats();
     </script>
